@@ -9,48 +9,13 @@ using testapi;
 namespace MyApp.Namespace
 {
 
-    //using (var db = new AdsMongoDbContext()){
-    //    var placesData = db.AdsPlace.Where(i => i.UserOwnerId == MongoDB.Bson.ObjectId.Parse(value.userOwnerId)).ToList();
-    //}
-
-
-    //using (var db = new AdsMongoDbContext()){
-    //    var existed = db.AdsPlace.Where(i => i.PlaceName == placeName && i.UserOwnerId == userOwnerId).FirstOrDefault();
-    //    if (existed == null){
-    //        AdsPlaceEntity objs = new AdsPlaceEntity
-    //        {
-    //            PlaceName = placeName,
-    //            UserOwnerId = userOwnerId,
-    //            PlaceAddress = placeAddress,
-    //        };
-    //        if (placeId != null)
-    //        {
-    //            objs.Id = placeId.Value;
-    //        }
-
-    //        await db.AdsPlace.Insert(objs);
-    //    }
-    //}
-
-    //using (var db = new AdsMongoDbContext())
-    //{
-    //    await db.AdsPlace.UpdatePartial(i => i.Id == placeId,
-    //    new Dictionary<System.Linq.Expressions.Expression<Func<AdsPlaceEntity, object>>, dynamic> { { f => f.UserOwnerId, userOwnerId }, }
-    //    );
-    //}
-
-    //using (var db = new AdsMongoDbContext()){
-    //    await db.AdsPlace.Delete(placeId);
-    //}
-
-
     [Route("api/[controller]")]
     [ApiController]
     public class MyApiController : ControllerBase
     {
         [Route("baitap210")]
         [HttpPost]
-        public async Task<int> baitap210([FromForm] int[] request)
+        public int baitap210([FromForm] int[] request)
         {
             return request
             .Where(num =>
@@ -63,7 +28,7 @@ namespace MyApp.Namespace
 
         [Route("baitap211")]
         [HttpPost]
-        public async Task<double> baitap211([FromBody] int[] numbers)
+        public double baitap211([FromBody] int[] numbers)
         {
             if (numbers == null || numbers.Length == 0)
             {
@@ -77,7 +42,7 @@ namespace MyApp.Namespace
 
         [Route("baitap212")]
         [HttpPost]
-        public async Task<double> baitap212([FromBody] int[] numbers)
+        public double baitap212([FromBody] int[] numbers)
         {
             if (numbers == null || numbers.Length == 0)
             {
@@ -92,7 +57,7 @@ namespace MyApp.Namespace
 
         [Route("baitap213")]
         [HttpPost]
-        public async Task<double> baitap213([FromBody] int[] numbers, int x)
+        public double baitap213([FromBody] int[] numbers, int x)
         {
             if (numbers == null || numbers.Length == 0)
             {
@@ -110,14 +75,14 @@ namespace MyApp.Namespace
 
         [Route("baitap214")]
         [HttpPost]
-        public async Task<double> baitap214([FromBody] int[] numbers)
+        public double baitap214([FromBody] int[] numbers)
         {
 
-            var positiveNumbers = numbers.Where(num => num > 0).ToList(); // Lọc các số dương
+            var positiveNumbers = numbers.Where(num => num > 0).ToList();
 
-            if (!positiveNumbers.Any()) return 0; // Nếu không có số dương, trả về 0
+            if (!positiveNumbers.Any()) return 0;
 
-            double product = positiveNumbers.Aggregate(1.0, (acc, num) => acc * num); // Tích các số dương
+            double product = positiveNumbers.Aggregate(1.0, (acc, num) => acc * num);
 
             return Math.Pow(product, 1.0 / positiveNumbers.Count);
 
@@ -126,7 +91,7 @@ namespace MyApp.Namespace
 
         public static bool IsPrime(int number)
         {
-            if (number < 2) return false; // Số nguyên tố nhỏ nhất là 2
+            if (number < 2) return false;
             for (int i = 2; i <= Math.Sqrt(number); i++)
             {
                 if (number % i == 0) return false;
@@ -134,31 +99,15 @@ namespace MyApp.Namespace
             return true;
         }
 
-        // Hàm tính trung bình cộng các số nguyên tố trong mảng
         public static double TinhTrungBinhSoNguyenTo(int[] numbers)
         {
             var primeNumbers = numbers.Where(num => IsPrime(num)).ToList();
 
-            if (!primeNumbers.Any()) return 0; // Nếu không có số nguyên tố nào, trả về 0
+            if (!primeNumbers.Any()) return 0;
 
-            return primeNumbers.Average(); // Tính trung bình cộng các số nguyên tố
+            return primeNumbers.Average();
         }
 
-
-        [Route("add")]
-        [HttpPost]
-        public async Task<double> add([FromBody] int[] numbers)
-        {
-
-            var positiveNumbers = numbers.Where(num => num > 0).ToList(); // Lọc các số dương
-
-            if (!positiveNumbers.Any()) return 0; // Nếu không có số dương, trả về 0
-
-            double product = positiveNumbers.Aggregate(1.0, (acc, num) => acc * num); // Tích các số dương
-
-            return Math.Pow(product, 1.0 / positiveNumbers.Count);
-
-        }
 
 
         [Route("getPlace")]
@@ -180,7 +129,7 @@ namespace MyApp.Namespace
 
         [Route("insertPlace")]
         [HttpPost]
-        public async Task<bool> inserPlace([FromBody] CreatePlaceRequest request)
+        public async Task<ApiResponse<InsertPlaceResponse>> inserPlace([FromBody] CreatePlaceRequest request)
         {
 
             using (var db = new AdsMongoDbContext())
@@ -196,30 +145,45 @@ namespace MyApp.Namespace
 
 
                     await db.AdsPlace.Insert(objs);
-                   return true;
+                    return new ApiResponse<InsertPlaceResponse> {
+                        Status = 1,
+                        Data = {PlaceName = request.PlaceName, PlaceAddress = request.PlaceAddress}
+                    };
                 }
-                return false;
+                 return new ApiResponse<InsertPlaceResponse>{
+                    Status = 0,
+                 }; ;
             }
         }
 
-        [Route("insertPlace")]
+        [Route("updatePlace")]
         [HttpPatch]
-        public async Task<bool> updatePlace([FromBody] UpdatePlaceRequest request)
+        public async Task<ApiResponse<UpdatePlaceResponse>> updatePlace([FromBody] UpdatePlaceRequest request)
         {
 
             using (var db = new AdsMongoDbContext())
             {
                 var placeObjectId = ObjectId.Parse(request.PlaceId);
                 var existed = db.AdsPlace.Where(i => i.Id == placeObjectId).FirstOrDefault();
-                if (existed == null)
+                if (existed != null)
                 {
 
                     existed.PlaceName = request.PlaceName;
                     existed.PlaceAddress = request.PlaceAddress;
                     await db.AdsPlace.Update(existed);
-                    return true;
+                    return new ApiResponse<UpdatePlaceResponse>
+                    {
+                        Status = 1,
+                        Data = new UpdatePlaceResponse
+                        {
+                            Id = placeObjectId
+                        }
+                    };
                 }
-                return false;
+                return new ApiResponse<UpdatePlaceResponse>
+                {
+                    Status = 0
+                };
             }
         }
 
@@ -233,7 +197,7 @@ namespace MyApp.Namespace
             {
                 var placeObjectId = ObjectId.Parse(placeId);
                 var existed = db.AdsPlace.Where(i => i.Id == placeObjectId).FirstOrDefault();
-                if (existed == null)
+                if (existed != null)
                 {
 
                     await db.AdsPlace.Delete(placeObjectId);
@@ -243,6 +207,9 @@ namespace MyApp.Namespace
             }
         }
     }
+
+
+
 
 
 
@@ -262,4 +229,25 @@ public class UpdatePlaceRequest
     public string PlaceId { get; set; }
     public string PlaceName { get; set; }
     public string PlaceAddress { get; set; }
+}
+
+public class ApiResponse<T>
+{
+    public int Status { get; set; }
+    public T? Data { get; set; }
+}
+
+public class UpdatePlaceResponse
+{
+    public ObjectId Id { get; set; }
+
+}
+
+
+public class InsertPlaceResponse
+{
+    public string PlaceName { get; set; }
+
+    public string PlaceAddress { get; set; }
+
 }
