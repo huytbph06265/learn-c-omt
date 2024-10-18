@@ -15,9 +15,9 @@ namespace MyApp.Namespace
     {
         [Route("baitap210")]
         [HttpPost]
-        public int baitap210([FromForm] int[] request)
+        public int baitap210([FromForm] int[] culture)
         {
-            return request
+            return culture
             .Where(num =>
             {
                 var firstDigit = Math.Abs(num).ToString()[0];
