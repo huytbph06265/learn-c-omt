@@ -1,4 +1,6 @@
-﻿using Google.Protobuf.WellKnownTypes;
+﻿using System.Linq;
+using System.Numerics;
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -17,6 +19,10 @@ namespace MyApp.Namespace
         [HttpPost]
         public int baitap210([FromForm] int[] culture)
         {
+
+
+            Console.WriteLine(culture);
+            Console.WriteLine(1231);
             return culture
             .Where(num =>
             {
@@ -114,8 +120,6 @@ namespace MyApp.Namespace
         [HttpGet]
         public List<AdsPlaceEntity> getPlace()
         {
-
-
             using (var db = new AdsMongoDbContext())
             {
 
@@ -123,8 +127,6 @@ namespace MyApp.Namespace
 
                 return placesData;
             }
-
-
         }
 
         [Route("insertPlace")]
@@ -141,13 +143,15 @@ namespace MyApp.Namespace
                     {
                         PlaceName = request.PlaceName,
                         PlaceAddress = request.PlaceAddress,
+                        PlaceTotal = request.PlaceTotal,
                     };
+
+                    Console.WriteLine(request);
 
 
                     await db.AdsPlace.Insert(objs);
                     return new ApiResponse<InsertPlaceResponse> {
                         Status = 1,
-                        Data = {PlaceName = request.PlaceName, PlaceAddress = request.PlaceAddress}
                     };
                 }
                  return new ApiResponse<InsertPlaceResponse>{
@@ -170,6 +174,7 @@ namespace MyApp.Namespace
 
                     existed.PlaceName = request.PlaceName;
                     existed.PlaceAddress = request.PlaceAddress;
+                    existed.PlaceTotal = request.PlaceTotal;
                     await db.AdsPlace.Update(existed);
                     return new ApiResponse<UpdatePlaceResponse>
                     {
@@ -206,29 +211,108 @@ namespace MyApp.Namespace
                 return false;
             }
         }
+
+        [Route("baitapPubSub")]
+        [HttpPost]
+        public double baitapPubSub([FromBody] int[] numbers)
+        {
+            var publisher = new Publisher();
+            var subscriber = new Subscriber();
+            if (numbers == null || numbers.Length == 0)
+            {
+                return 0;
+            }
+            double average = 0;
+            var positiveNumbers = numbers.Where(num => num > 0).ToList();
+            Console.WriteLine(positiveNumbers);
+
+
+            subscriber.Subscribe(publisher, data =>
+            {
+                average = data.Average();
+            });
+
+            publisher.PublishData(positiveNumbers);
+
+            return average;
+        }
+
+
+        [Route("baitapPubSubDb")]
+        [HttpPost]
+        public double baitapPubSubDb()
+        {
+            var publisher = new Publisher();
+            var subscriber = new Subscriber();
+
+            using (var db = new AdsMongoDbContext())
+            {
+                var placesData = db.AdsPlace.Where(num => num.PlaceTotal > 0).ToList();
+                
+
+                if (placesData.Count() == 0)
+                {
+                    return 0;
+                }
+                double average = 0;
+                var placeTotals = placesData.Select(num => num.PlaceTotal).ToList();
+               
+                subscriber.Subscribe(publisher, data =>
+                {
+                    average = placeTotals.Average();
+                });
+
+            publisher.PublishData(placeTotals);
+
+            return average;
+
+        }
+
+           
+        }
     }
 
-
-
-
-
-
-
 }
+
+
+public class Publisher
+{
+    public event EventHandler<List<int>>? DataReceived;
+
+    public void PublishData(List<int> data)
+    {
+        DataReceived?.Invoke(this, data);
+    }
+}
+
+public class Subscriber
+{
+    public void Subscribe(Publisher publisher, Action<List<int>> callback)
+    {
+        publisher.DataReceived += (sender, data) =>
+        {
+            callback(data);
+        };
+    }
+}
+
+
 
 public class CreatePlaceRequest
 {
     public string PlaceName { get; set; }
     public string PlaceAddress { get; set; }
+    public int PlaceTotal { get; set; }
 }
 
 
 public class UpdatePlaceRequest
 {
 
-    public string PlaceId { get; set; }
-    public string PlaceName { get; set; }
-    public string PlaceAddress { get; set; }
+    public string? PlaceId { get; set; }
+    public string? PlaceName { get; set; }
+    public string? PlaceAddress { get; set; }
+    public int PlaceTotal { get; set; }
 }
 
 public class ApiResponse<T>
@@ -246,8 +330,8 @@ public class UpdatePlaceResponse
 
 public class InsertPlaceResponse
 {
-    public string PlaceName { get; set; }
+    public string? PlaceName { get; set; }
 
-    public string PlaceAddress { get; set; }
+    public string? PlaceAddress { get; set; }
 
 }

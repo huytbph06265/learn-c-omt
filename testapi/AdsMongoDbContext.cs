@@ -21,6 +21,7 @@ namespace testapi
     {
         public string PlaceName { get; set; }
         public string PlaceAddress { get; set; }
+        public int PlaceTotal { get; set; }
 
         public long LastUpdated { get; set; }
     }

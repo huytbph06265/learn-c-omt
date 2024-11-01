@@ -54,18 +54,15 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseRequestCulture();
-
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseRequestCulture();
+
+
 app.MapControllers();
 
-app.Run(async (context) =>
-{
-    await context.Response.WriteAsync(
-        $"CurrentCulture.DisplayName: {CultureInfo.CurrentCulture.DisplayName}");
-});
+
 app.Run();
 
 

@@ -1,4 +1,6 @@
 using System.Globalization;
+using Mysqlx.Crud;
+using System.Net;
 
 namespace Middleware.Example;
 
@@ -13,18 +15,14 @@ public class RequestCultureMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        Console.WriteLine(context.Request.Headers["Authorization"]);
-        string authorizationHeader = context.Request.Headers.Authorization;
 
-        if (!string.IsNullOrWhiteSpace(authorizationHeader) && authorizationHeader.StartsWith("Bearer "))
+        String? authorizationHeader = context.Request.Headers.Authorization;
+        Console.WriteLine(authorizationHeader);
+
+        if (!string.IsNullOrWhiteSpace(authorizationHeader))
         {
-            var token = authorizationHeader.Substring("Bearer ".Length).Trim();
-            var culture = new CultureInfo(token);
-
-            CultureInfo.CurrentCulture = culture;
-            CultureInfo.CurrentUICulture = culture;
-
-            Console.WriteLine($"Culture set to: {culture.Name}");
+            String token = authorizationHeader;
+            await _next(context);
         }
         else
         {
@@ -33,7 +31,6 @@ public class RequestCultureMiddleware
         }
 
         // Call the next delegate/middleware in the pipeline.
-        await _next(context);
     }
 }
 
